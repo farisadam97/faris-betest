@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
+const { mongodbUrl } = require("../Config");
 
 mongoose
-  .connect(process.env.MONGO_DB)
+  .connect(mongodbUrl)
   .then(() => console.log("db connect"))
   .catch((err) => console.log(err));

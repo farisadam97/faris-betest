@@ -3,17 +3,22 @@ const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const dotenv = require("dotenv");
 const appRoutes = require("./Route");
-const database = require("./Database");
 const app = express();
 
 dotenv.config();
 
-app.use(database);
-app.use(logger("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+// Connect to db
+require("./Database");
 
+app.use(logger("dev"));
+
+// parse json from request
+app.use(express.json());
+
+// parse body request
+app.use(express.urlencoded({ extended: false }));
+
+// middleware for api route that contains all routes
 app.use("/api", appRoutes);
 
 module.exports = app;
