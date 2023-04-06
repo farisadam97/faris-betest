@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const { ObjectId } = monggose.Schema;
+const { ObjectId } = mongoose.Schema;
 
 const accountSchema = mongoose.Schema({
   userName: {

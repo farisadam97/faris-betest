@@ -4,7 +4,7 @@ const logger = require("morgan");
 const dotenv = require("dotenv");
 const cors = require("cors");
 
-const appRoutes = require("./Route");
+const appRoutes = require("./Routes");
 const app = express();
 
 dotenv.config();

@@ -4,7 +4,6 @@ const userInfoSchema = mongoose.Schema({
   fullName: {
     type: mongoose.SchemaTypes.String,
     required: true,
-    unique: true,
     minLength: 6,
   },
   accountNumber: {
