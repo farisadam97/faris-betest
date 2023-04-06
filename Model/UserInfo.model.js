@@ -25,7 +25,7 @@ const userInfoSchema = mongoose.Schema({
   },
   registrationNumber: {
     type: mongoose.SchemaTypes.String,
-    default: Math.round(new Date().now / 1000) + Math.random() * 10,
+    // default: Math.round(new Date().now / 1000 + Math.random() * 10).toString(),
   },
   createdAt: {
     type: mongoose.SchemaTypes.Date,

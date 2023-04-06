@@ -34,23 +34,41 @@ const registerAccount = async (req, res) => {
 
     if (accountNumberExist) throw new Error("Account Number already used!");
 
-    const userInfoBody = {
-      fullName: body.fullName,
-      accountNumber: body.accountNumber,
-      emailAddress: body.emailAddress,
-    };
+    // const userInfoBody = {
+    //   fullName: body.fullName,
+    //   accountNumber: body.accountNumber,
+    //   emailAddress: body.emailAddress,
+    //   registrationNumber: Math.round(
+    //     new Date().now / 1000 + Math.random() * 10
+    //   ).toString(),
+    // };
+    const time = new Date().getTime();
+    const string = Math.floor(time + Math.random() * 10);
+    console.log("string", string, time);
 
-    const newUserInfo = await userInfoService.createNew(userInfoBody);
+    // const newUserInfo = await userInfoModel.create(userInfoBody);
 
-    const accountBody = {
-      userName: body.userName,
-      password: hashedPassword,
-      userId: newUserInfo.id,
-    };
+    // const accountBody = {
+    //   userName: body.userName,
+    //   password: hashedPassword,
+    //   userId: newUserInfo.id,
+    // };
 
-    const newAccount = await accountModel.create(accountBody);
+    // const newAccount = await accountModel.create(accountBody);
 
-    successResponse(res, 200, "Account has been created", newAccount);
+    // const resData = {
+    //   _id: newAccount.id,
+    //   userName: newAccount.userName,
+    //   userInfo: {
+    //     _id: newUserInfo.id,
+    //     fullName: newUserInfo.fullName,
+    //     accountNumber: newUserInfo.accountNumber,
+    //     registrationNumber: newUserInfo.registrationNumber,
+    //     createdAt: newUserInfo.createdAt,
+    //   },
+    // };
+
+    successResponse(res, 200, "Account has been created", { as: "" });
   } catch (error) {
     return res.status(400).send({
       status: "error",
@@ -62,9 +80,14 @@ const registerAccount = async (req, res) => {
 const getAccountById = async (req, res) => {
   const { accountId } = req.params;
 
-  const account = await accountModel.findById(accountId, {
-    include: [userInfoModel],
-  });
+  const account = await accountModel
+    .findById(accountId)
+    .select("-password ")
+    .populate(
+      "userId",
+      "fullName accountNumber emailAddress registrationNumber"
+    )
+    .exec();
 
   if (account) {
     successResponse(res, 200, "", account);
