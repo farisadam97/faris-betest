@@ -2,15 +2,19 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const dotenv = require("dotenv");
+const cors = require("cors");
+
 const appRoutes = require("./Route");
 const app = express();
 
 dotenv.config();
 
+app.use(cors());
+
 // Connect to db
 require("./Database");
 
-app.use(logger("dev"));
+// app.use(logger("dev"));
 
 // parse json from request
 app.use(express.json());
