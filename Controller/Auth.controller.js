@@ -109,13 +109,18 @@ const loginAccount = async (req, res) => {
     const token = jwt.sign(
       {
         id: account.__id,
+        userName: account.userName,
       },
       process.env.JWT_SECRET
     );
+    const resData = {
+      account,
+      token: token,
+    };
 
-    successResponse(res, 200, "Login success", token);
+    successResponse(res, 200, "Login success", resData);
   } catch (error) {
-    errorResponse(res, 400, "Something error");
+    errorResponse(res, 400, error.message);
   }
 };
 
