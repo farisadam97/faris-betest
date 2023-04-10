@@ -9,6 +9,20 @@ function ErrorMessage(res, error) {
   errorResponse(res, 400, message);
 }
 
+const getAllAccount = async (req, res) => {
+  try {
+    const accounts = await accountModel
+      .find()
+      .select("-password")
+      .populate("userId")
+      .exec();
+
+    successResponse(res, 200, "success", accounts);
+  } catch (error) {
+    ErrorMessage(res, error);
+  }
+};
+
 const getAccountById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -19,7 +33,7 @@ const getAccountById = async (req, res) => {
       .exec();
 
     if (account) {
-      successResponse(res, 200, "", account);
+      successResponse(res, 200, "success", account);
     } else {
       throw new Error("Account not found");
     }
@@ -110,15 +124,36 @@ const findByRegistrationNumber = async (req, res) => {
 
     if (!account) throw new Error("Account not found");
     console.log(account);
-    successResponse(res, 200, account);
+    successResponse(res, 200, "success", account);
+  } catch (error) {
+    ErrorMessage(res, error);
+  }
+};
+
+const getLastLoginThreeDays = async (req, res) => {
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  try {
+    const accounts = await accountModel
+      .find({
+        lastLoginDateTime: {
+          $lte: threeDaysAgo,
+        },
+      })
+      .select("-password")
+      .populate("userId")
+      .exec();
+
+    successResponse(res, 200, "success", accounts);
   } catch (error) {
     ErrorMessage(res, error);
   }
 };
 
 module.exports = {
+  getAllAccount,
   getAccountById,
   findAccountAndUpdate,
   deleteAccount,
   findByRegistrationNumber,
+  getLastLoginThreeDays,
 };
