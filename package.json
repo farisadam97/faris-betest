@@ -4,12 +4,15 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "nodemon ./bin/www"
+    "build": "npm install && npm run start",
+    "dev": "nodemon ./bin/www",
+    "test": "cross-env NODE_ENV=test jest --testTimeout=5000 --detectOpenHandles"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "debug": "~2.6.9",
     "dotenv": "^16.0.3",
     "express": "~4.16.1",
@@ -19,6 +22,7 @@
     "morgan": "~1.9.1"
   },
   "devDependencies": {
+    "@faker-js/faker": "^7.6.0",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "jest": "^29.5.0",
