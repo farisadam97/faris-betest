@@ -1,102 +1,124 @@
-const bcrypt = require("bcrypt");
 const Joi = require("joi");
 const accountModel = require("../Model/Account.model");
 const userInfoModel = require("../Model/UserInfo.model");
 const { successResponse, errorResponse } = require("../Helper/ApiResponse");
 const { validateField } = require("../Helper/ValidateField");
 
-const registerAccount = async (req, res) => {
-  const { body } = req;
+function ErrorMessage(res, error) {
+  const message = error.message.replace(/\"/g, "").split(",");
+  errorResponse(res, 400, message);
+}
 
+const getAccountById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const account = await accountModel
+      .findById(id)
+      .select("-password ")
+      .populate("userId")
+      .exec();
+
+    if (account) {
+      successResponse(res, 200, "", account);
+    } else {
+      throw new Error("Account not found");
+    }
+  } catch (error) {
+    ErrorMessage(res, error);
+  }
+};
+
+const findAccountAndUpdate = async (req, res) => {
+  const { id } = req.params;
+  const { body } = req;
   const schema = Joi.object({
-    userName: Joi.string().alphanum().min(6).required(),
-    password: Joi.string().alphanum().min(8).required(),
+    userName: Joi.string().alphanum().min(6),
     fullName: Joi.string().required(),
     accountNumber: Joi.string()
       .pattern(/^[a-zA-Z0-9]+$/)
       .required(),
-    emailAddress: Joi.string().email().required(),
+    emailAddress: Joi.string().email(),
   });
 
   try {
     await validateField(body, schema);
-    const accountExist = await accountModel.findOne({
-      userName: body.userName,
-    });
-    if (accountExist) throw new Error("User already exist!");
 
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(body.password, salt);
+    const account = await accountModel.findById(id);
 
-    const accountNumberExist = await userInfoModel.findOne({
-      accountNumber: body.accountNumber,
-    });
+    if (!account) {
+      throw new Error("Account not found");
+    }
 
-    if (accountNumberExist) throw new Error("Account Number already used!");
-
-    // const userInfoBody = {
-    //   fullName: body.fullName,
-    //   accountNumber: body.accountNumber,
-    //   emailAddress: body.emailAddress,
-    //   registrationNumber: Math.round(
-    //     new Date().now / 1000 + Math.random() * 10
-    //   ).toString(),
-    // };
-    const time = new Date().getTime();
-    const string = Math.floor(time + Math.random() * 10);
-    console.log("string", string, time);
-
-    // const newUserInfo = await userInfoModel.create(userInfoBody);
-
-    // const accountBody = {
-    //   userName: body.userName,
-    //   password: hashedPassword,
-    //   userId: newUserInfo.id,
-    // };
-
-    // const newAccount = await accountModel.create(accountBody);
-
-    // const resData = {
-    //   _id: newAccount.id,
-    //   userName: newAccount.userName,
-    //   userInfo: {
-    //     _id: newUserInfo.id,
-    //     fullName: newUserInfo.fullName,
-    //     accountNumber: newUserInfo.accountNumber,
-    //     registrationNumber: newUserInfo.registrationNumber,
-    //     createdAt: newUserInfo.createdAt,
-    //   },
-    // };
-
-    successResponse(res, 200, "Account has been created", { as: "" });
+    const userInfo = await userInfoModel.findById(account.userId);
+    const { userName, ...rest } = body;
+    if (userName) {
+      if (userName === account.userName) {
+        Object.assign(userInfo, { ...rest, updatedAt: Date.now() });
+        await userInfo.save();
+        successResponse(res, 200, "Account updated successfully");
+      } else {
+        const userNameExist = await accountModel.findOne({
+          userName: body.userName,
+        });
+        if (userNameExist) {
+          throw new Error("Username already exist");
+        } else {
+          account.userName = userName;
+          await account.save();
+          Object.assign(userInfo, { ...rest, updatedAt: Date.now() });
+          await userInfo.save();
+          successResponse(res, 200, "Account updated successfully");
+        }
+      }
+    } else {
+      Object.assign(userInfo, { ...rest, updatedAt: Date.now() });
+      await userInfo.save();
+      successResponse(res, 200, "Account updated successfully");
+    }
   } catch (error) {
-    return res.status(400).send({
-      status: "error",
-      message: error.message.replace(/\"/g, "").split(","),
-    });
+    ErrorMessage(res, error);
   }
 };
 
-const getAccountById = async (req, res) => {
-  const { accountId } = req.params;
+const deleteAccount = async (req, res) => {
+  const { id } = req.params;
 
-  const account = await accountModel
-    .findById(accountId)
-    .select("-password ")
-    .populate(
-      "userId",
-      "fullName accountNumber emailAddress registrationNumber"
-    )
-    .exec();
+  try {
+    const account = await accountModel.findById(id);
 
-  if (account) {
-    successResponse(res, 200, "", account);
-  } else {
-    throw new Error("Account not found");
+    if (!account) throw new Error("Account not found");
+
+    await userInfoModel.deleteOne({ _id: account.userId });
+    await accountModel.deleteOne({ _id: id });
+
+    successResponse(res, 200, "Account deleted successfully");
+  } catch (error) {
+    ErrorMessage(res, error);
+  }
+};
+
+const findByRegistrationNumber = async (req, res) => {
+  const { registnumber } = req.params;
+  try {
+    const account = await accountModel
+      .findOne({})
+      .populate({
+        path: "userId",
+        match: { registrationNumber: registnumber },
+      })
+      .exec();
+
+    if (!account) throw new Error("Account not found");
+    console.log(account);
+    successResponse(res, 200, account);
+  } catch (error) {
+    ErrorMessage(res, error);
   }
 };
 
 module.exports = {
-  registerAccount,
   getAccountById,
+  findAccountAndUpdate,
+  deleteAccount,
+  findByRegistrationNumber,
 };

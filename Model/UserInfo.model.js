@@ -9,7 +9,6 @@ const userInfoSchema = mongoose.Schema({
   accountNumber: {
     type: mongoose.SchemaTypes.String,
     required: true,
-    unique: true,
     minLength: 8,
   },
   emailAddress: {
