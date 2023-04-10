@@ -88,15 +88,21 @@ const loginAccount = async (req, res) => {
     password: Joi.string().alphanum().min(8).required(),
   });
   try {
-    // await validateField(body, schema);
+    await validateField(body, schema);
     const account = await accountModel
       .findOne({ userName: body.userName })
-      .select("-password")
       .populate("userId")
       .exec();
     if (!account) {
       errorResponse(res, 400, "Account not found");
     }
+
+    await accountModel.findOneAndUpdate(
+      { userName: body.userName },
+      {
+        lastLoginDateTime: Date.now(),
+      }
+    );
     const isPasswordValid = await bcrypt.compare(
       body.password,
       account.password
@@ -111,11 +117,15 @@ const loginAccount = async (req, res) => {
         id: account.__id,
         userName: account.userName,
       },
-      process.env.JWT_SECRET
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "15m",
+      }
     );
     const resData = {
-      account,
-      token: token,
+      userName: account.userName,
+      userInfo: account.userId,
+      token,
     };
 
     successResponse(res, 200, "Login success", resData);
