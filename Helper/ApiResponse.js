@@ -1,6 +1,6 @@
 const successResponse = async (res, status, message, data) => {
   return res.status(status).json({
-    status,
+    status: "success",
     message,
     data,
   });
