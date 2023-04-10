@@ -2,7 +2,6 @@ const redis = require("redis");
 const { redisUrl, redisPort } = require("../Config");
 
 const client = redis.createClient();
-
 client.on("error", (error) => {
   if (error.message.includes("Socket already opened")) {
     console.log("Redis client already connected");

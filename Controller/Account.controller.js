@@ -13,35 +13,23 @@ function ErrorMessage(res, error) {
 const getAllAccount = async (req, res) => {
   try {
     await client.connect();
-
-    // client.get("accounts", async (err, data) => {
-    //   // if (err) throw err;
-
-    //   if (data !== null) {
-    //     // if exist in Redis, serve from Redis cache
-    //     successResponse(res, 200, "success", JSON.parse(data));
-    //   } else {
-    //     // if not exist, serve from database and cache the result
-    //     try {
-    //       const accounts = await accountModel
-    //         .find()
-    //         .select("-password")
-    //         .populate("userId")
-    //         .exec();
-    //       client.set("accounts", 3600, JSON.stringify(accounts)); // cache the result for 1 hour
-    //       await client.quit();
-    //       successResponse(res, 200, "success", accounts);
-    //     } catch (error) {
-    //       next(error);
-    //     }
-    //   }
-    // });
-    const accounts = await accountModel
-      .find()
-      .select("-password")
-      .populate("userId")
-      .exec();
-    successResponse(res, 200, "success", accounts);
+    const dataCache = await client.get("accounts");
+    if (dataCache) {
+      successResponse(res, 200, "success", JSON.parse(dataCache));
+    } else {
+      try {
+        const accounts = await accountModel
+          .find()
+          .select("-password")
+          .populate("userId")
+          .exec();
+        await client.set("accounts", JSON.stringify(accounts));
+        await client.disconnect();
+        successResponse(res, 200, "success", accounts);
+      } catch (error) {
+        ErrorMessage(res, error);
+      }
+    }
   } catch (error) {
     ErrorMessage(res, error);
   }
